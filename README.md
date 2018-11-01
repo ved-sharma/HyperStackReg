@@ -1,1 +1,1 @@
-# HyperStackReg
+# HyperStackReg Imagej plugin
