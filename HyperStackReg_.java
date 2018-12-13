@@ -1,12 +1,12 @@
 /*
-Version 5d: September 15, 2016
-starting version: 5c
+Version 5.5: December 13, 2018
+starting version: 5.4
 
-New feature in version 5d 
-	Directing the warning message about the eigen value to log file. IJ.error() in previous versions
-	was stopping the plugin when called from a macro 
-	
+Changes in version 5.5
+	Had a bug on line 164 in version 5.4, corrected it back to the corresponding line in version 5.3
+
 Author: Ved P. Sharma
+ (vedsharma@gmail.com)
 Albert Einstein College of Medicine, New York
 */
 
@@ -161,7 +161,8 @@ public class HyperStackReg_v05d	implements PlugIn {
     		impRGB = new SubHyperstackMaker().makeSubhyperstack(imp, cString, zString, tString);
         }
         impRGB.setTitle(WindowManager.getUniqueName(imp.getTitle()));
-    	if(sum_boolCh  != 1) {
+//    	if(sum_boolCh  != 1) {
+    	if(sum_boolCh  > 1 || (sum_boolCh ==0 && numCh >1)) {
     		IJ.log("Converting duplicated Hyperstack to RGB...");
 			impRGB.flattenStack();
 		}
