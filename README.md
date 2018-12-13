@@ -25,10 +25,7 @@ Just like StackReg, HyperStackReg requires that another plugin called TurboReg s
 **Step 5:** All the registered channels are combined into a hyperstack.
 
 # Batch processing
-Plugin is macro recordable, so a folder full of files can be processed in batch. Check the supplied "HyperStackReg_processFolder.ijm" macro for example.
-
-Same as in version 4, except user can now select the channels to be used for transformation matrix computation. For example,
-    run("HyperStackReg v05", "transformation=Affine channel3 channel4 show");
+Plugin is macro recordable, so a folder full of files can be processed in batch mode. Check the [HyperStackReg_processFolder.ijm](https://github.com/ved-sharma/HyperStackReg/blob/master/HyperStackReg_processFolder.ijm) macro for example.
 
 # Acknowledgements
 This plugin builts on the functionalities of other plugins: [StackReg](http://bigwww.epfl.ch/thevenaz/stackreg/) and [MultiStackReg](http://bradbusse.net/downloads.html)
