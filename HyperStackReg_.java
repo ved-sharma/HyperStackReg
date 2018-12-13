@@ -1,17 +1,11 @@
 /*
-Version 5: First released as version 05b on June 2, 2016
-Update: version 5c, June 7, 2016
+Version 5d: September 15, 2016
+starting version: 5c
 
-New feature in version 5 (a, b and c)
-1. User now have an option to choose specific channel(s) for transformation matrix computation.
-2. Updated messages to be displayed in the Log file during the plugin execution. 
-3. Improved UI layout with gd.setInsets() method 
-4. is macro recordable (whereas version 5a was not!)
-5. If user does not select any channel for transformation matrix computation, then rather than
-	 giving an error message, all the channels are selected and plugin proceeds further 
-6. Above helps in not writing all the channel names as options argument in the run call to the
-	 plugin, which makes the macro call to plugin in version 5, the same as in version 4  
-
+New feature in version 5d 
+	Directing the warning message about the eigen value to log file. IJ.error() in previous versions
+	was stopping the plugin when called from a macro 
+	
 Author: Ved P. Sharma
 Albert Einstein College of Medicine, New York
 */
@@ -48,8 +42,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.String; // added this to use function lastIndexOf to name the final hyperstack
 
-public class HyperStackReg_v05	implements PlugIn {
-	private String version = "05";
+public class HyperStackReg_v05d	implements PlugIn {
+	private String version = "05d";
 	private static final double TINY = 	(double)Float.intBitsToFloat((int)0x33FFFFFF);
 	private String loadPathAndFilename="";
 	private boolean saveTransform;
@@ -167,8 +161,7 @@ public class HyperStackReg_v05	implements PlugIn {
     		impRGB = new SubHyperstackMaker().makeSubhyperstack(imp, cString, zString, tString);
         }
         impRGB.setTitle(WindowManager.getUniqueName(imp.getTitle()));
-//    	if(sum_boolCh  != 1) {
-      	if(sum_boolCh  > 1 || (sum_boolCh ==0 && numCh >1)) {
+    	if(sum_boolCh  != 1) {
     		IJ.log("Converting duplicated Hyperstack to RGB...");
 			impRGB.flattenStack();
 		}
@@ -785,7 +778,7 @@ public class HyperStackReg_v05	implements PlugIn {
 			}
 		}
 		else {
-			IJ.error("Warning: complex eigenvalue found; ignoring imaginary part.");
+			IJ.log("Warning: complex eigenvalue found; ignoring imaginary part.");
 			Det = Math.sqrt(Det);
 			Q = ((R + Det) < 0.0) ? (-Math.exp((1.0 / 3.0) * Math.log(-R - Det)))
 				: (Math.exp((1.0 / 3.0) * Math.log(R + Det)));
@@ -2325,4 +2318,4 @@ public class HyperStackReg_v05	implements PlugIn {
 		return(source);
 	} /* end registerSlice */
 
-} /* end class HyperStackReg_v05*/
+} /* end class HyperStackReg_v05d*/
