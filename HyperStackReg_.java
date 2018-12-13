@@ -1,10 +1,11 @@
 /*
-Version 4: December 31, 2015: 
-starting version: 3a
+Version 5a: March 31, 2016
+starting version: 4
 
-New features in v04: 
-1. Modified code to handle special cases (C=1, Z=1, T>1 and C=1, Z>1, T>1).
-2. Made error messages generated with IJ.error more explicit
+New features in version 5a: 
+1. User now have an option to choose specific channels for transformation matrix computation.
+2. Updated messages to be displayed in the Log file during the plugin execution. 
+3. Improved UI layout with gd.setInsets() method 
 
 Author: Ved P. Sharma
 Albert Einstein College of Medicine, New York
@@ -22,6 +23,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.Duplicator;
 import ij.plugin.Concatenator;
 import ij.plugin.HyperStackConverter; 
+import ij.plugin.SubHyperstackMaker; // for using the SubHyperstackMaker().makeSubhyperstack() method
 import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -41,7 +43,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.String; // added this to use function lastIndexOf to name the final hyperstack
 
-public class HyperStackReg_v04	implements PlugIn {
+public class HyperStackReg_v05a	implements PlugIn {
+	private String version = "05a";
 	private static final double TINY = 	(double)Float.intBitsToFloat((int)0x33FFFFFF);
 	private String loadPathAndFilename="";
 	private boolean saveTransform;
@@ -79,37 +82,72 @@ public class HyperStackReg_v04	implements PlugIn {
 		}
 
 // Pop-up dialog		
-		GenericDialog gd = new GenericDialog("HyperStackReg_v04");
-		gd.addMessage("This plugin flattens the original 8/16 bit multichannel\n"
-									  + "  Hyperstack to RGB.\n"
-									  + "Runs StackReg on the time lapse (T) channel for each\n"
-									  + "  Z-slice, and records all the transformation matrices\n"
-									  + "  in a text file.\n"
-									  + "Finally, it applies those transformation matrices to each\n"
-									  + "  channel of the original 8/16 bit Hyperstack.\n");
+		GenericDialog gd = new GenericDialog("HyperStackReg, Version: "+version);
+		gd.setInsets(0, 0, 0);
+		gd.addMessage("Click \"Help\" button below for instructions\non how to use this plugin.");
 		final String[] transformationItem = {"Translation", "Rigid Body", "Scaled Rotation",	"Affine"};
 		gd.addChoice("Transformation:", transformationItem, "Affine");
+		gd.setInsets(0, 0, 0);
+		gd.addMessage("Choose channels for transformation\nmatrix computation:");
+		for(int i = 1; i<=numCh; i++) {
+			gd.setInsets(0, 20, 0);
+			gd.addCheckbox("Channel "+i, true);
+		}
+		gd.setInsets(5, 5, 0);
 		gd.addCheckbox("Show processing details in the Log file", true);
+		gd.addHelp("https://sites.google.com/site/vedsharma/imagej-plugins-macros/hyperstackreg");
 		gd.showDialog();
 		if (gd.wasCanceled()) 
 			return;
 		final int transformation = gd.getNextChoiceIndex();
+		boolean [] boolCh = new boolean[numCh];
+		for(int i = 0; i<numCh; i++)
+			 boolCh[i] = gd.getNextBoolean();
 		 boolean boolLog = gd.getNextBoolean();
 
-// Convert the original 8 or 16 bit Hyperstack to RGB Hyperstack
+// Duplicate or make subHyperstack from the original 8 or 16 bit Hyperstack; convert to RGB if more than 1 channels
+        int sum_boolCh=0;
+		for(int i = 0; i<numCh; i++)
+			 sum_boolCh = sum_boolCh + (boolCh[i] ? 1 : 0);
+        if(sum_boolCh == 0){
+			IJ.error("HyperStackReg", "ERROR:\n \nNo channel selected!\nSelect at least one channel for transformation matrix computation.");
+			return; 
+        }
         if(boolLog) {
         	IJ.log(imageTitle+" (C="+numCh+", Z="+numSl+", T="+numFr+")"); 
         	IJ.log("*****************************************************");
-        	if(numCh==1)
-        		IJ.log("Duplicating Hyperstack...");
-        	else
-        		IJ.log("Duplicating Hyperstack and converting to RGB...");
         }
-		 impRGB = imp.duplicate();
-		impRGB.setTitle(WindowManager.getUniqueName(imp.getTitle()));
-		if(numCh >1)
+        if(sum_boolCh == numCh) {
+            if(boolLog)
+            	IJ.log("Duplicating Hyperstack for transformation matrix computation..."); 
+            impRGB = imp.duplicate();
+        }
+        else { 		// Extract user-selected channels and make subhyperstack        	
+    		final boolean hasC = numCh > 1;
+    		final boolean hasZ = numSl > 1;
+    		final boolean hasT = numFr > 1;
+            String cString = "";
+            if(!hasC)
+            	cString = "1";
+            else
+            	for(int i = 0; i<numCh; i++) {
+            		if(boolCh[i])
+            			cString = cString+","+(i+1);
+            	}
+            cString = cString.substring(1); // to remove the first comma
+    		final String zString = hasZ ? "1-"+numSl : "1";
+    		final String tString = hasT ? "1-"+numFr : "1";
+//    		IJ.log(cString); IJ.log(zString); IJ.log(tString);
+            if(boolLog)
+            	IJ.log("Duplicating channel(s): "+cString+" for transformation matrix computation..."); 
+    		impRGB = new SubHyperstackMaker().makeSubhyperstack(imp, cString, zString, tString);
+        }
+        impRGB.setTitle(WindowManager.getUniqueName(imp.getTitle()));
+    	if(sum_boolCh >1) {
+    		IJ.log("Converting duplicated Hyperstack to RGB...");
 			impRGB.flattenStack();
-		impRGB.show();
+		}
+		impRGB.show(); // Note: impRGB is not of RGB type if only 1 channel is being used for transformation matrix computation
 		
 // Set up path for the transformation matrix text file
 		saveTransform = true;
@@ -118,25 +156,21 @@ public class HyperStackReg_v04	implements PlugIn {
 		String path=savePath+saveFile;;
 		try{
 			FileWriter fw= new FileWriter(path);
-			fw.write("HyperStackReg_v04 Transformation File\n");
+			fw.write("HyperStackReg_v"+version+" Transformation File\n");
 			fw.write("Author: Ved P. Sharma\n");
 			fw.write("Albert Einstein College of Medicine, New York\n");
 			fw.close();
 		}catch(IOException e){}
 		if(boolLog)
-			IJ.log("Transformation matrix file created at:\n  "+path);
+			IJ.log("An empty Transformation matrix file created at:\n  "+path);
 
 //Start registering RGB slices and write transformation in the text file
 		final int width = impRGB.getWidth();
 		final int height = impRGB.getHeight();
 		final int targetSlice = impRGB.getT();
 		tSlice=targetSlice;
-		if(boolLog) {
-			if(numCh==1)
-				IJ.log("Started registering duplicated HyperStack...");
-			else
-				IJ.log("Started registering RGB HyperStack...");
-	}
+		if(boolLog)
+				IJ.log("Started computation of transformation matrices by registering duplicated or extracted HyperStack...");
 		for(int k =1; k<=numSl; k++) {
 			if(boolLog)
 				IJ.log("  Processing slice: Z = "+k);
@@ -276,7 +310,7 @@ public class HyperStackReg_v04	implements PlugIn {
 	}
 		impRGB.close();
 		if(boolLog)
-			IJ.log("Done saving  all the transformation matrices.\nApplying transformation matrices to the original Hyperstack.");
+			IJ.log("Finished writing all the transformation matrices.\nApplying transformation matrices to the original Hyperstack...");
 
 // duplicate channels; read transformations and apply them to each channel
 			impAllSlices=null;
@@ -455,6 +489,8 @@ public class HyperStackReg_v04	implements PlugIn {
 			new StackWindow(HS);
 			if(boolLog)
 				IJ.log("Done!\n"+" ");
+			IJ.showStatus("Finished running HyperStackReg");
+			IJ.showProgress(1.0); //to erase progress bar
 	} /* end run */
 			
 /* ********************   private methods *********************/
@@ -2264,4 +2300,4 @@ public class HyperStackReg_v04	implements PlugIn {
 		return(source);
 	} /* end registerSlice */
 
-} /* end class HyperStackReg_v04*/
+} /* end class HyperStackReg_v05a*/
