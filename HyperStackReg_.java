@@ -1,6 +1,8 @@
-// Version 3: November 20, 2015
-// Limitation: seems to me that target image had to be the first image
-// source image is warped to register to a target image
+// Version 3a: December 23, 2015: 
+// starting version 3
+// New feature: removed bug produced when the file name does not have "." in its name
+//
+// Author: Ved P. Sharma
 
 // ImageJ
 import ij.CompositeImage;
@@ -33,7 +35,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.String; // added this to use function lastIndexOf to name the final hyperstack
 
-public class HyperStackReg_v03	implements PlugIn {
+public class HyperStackReg_v03a	implements PlugIn {
 	private static final double TINY = 	(double)Float.intBitsToFloat((int)0x33FFFFFF);
 	private String loadPathAndFilename="";
 	private boolean saveTransform;
@@ -67,7 +69,7 @@ public class HyperStackReg_v03	implements PlugIn {
 		}
 
 // Pop-up dialog		
-		GenericDialog gd = new GenericDialog("HyperStackReg_v03");
+		GenericDialog gd = new GenericDialog("HyperStackReg_v03a");
 		gd.addMessage("This plugin flattens the original 8/16 bit multichannel\n"
 									  + "  Hyperstack to RGB.\n"
 									  + "Runs StackReg on the time lapse (T) channel for each\n"
@@ -102,7 +104,7 @@ public class HyperStackReg_v03	implements PlugIn {
 		String path=savePath+saveFile;;
 		try{
 			FileWriter fw= new FileWriter(path);
-			fw.write("HyperStackReg_v03 Transformation File\n");
+			fw.write("HyperStackReg_v03a Transformation File\n");
 			fw.write("Author: Ved P. Sharma, Novermber 19, 2015\n");
 			fw.write("Email: vedsharma@gmail.com\n");
 			fw.close();
@@ -424,7 +426,10 @@ public class HyperStackReg_v03	implements PlugIn {
 			impAllSlices.close();
 			int index = imageTitle.lastIndexOf("."); 
 			int finalIndex = imageTitle.length();
-			HS.setTitle(imageTitle.substring(0, index)+"-registered"+imageTitle.substring(index, finalIndex));
+			if(index != -1)
+				HS.setTitle(imageTitle.substring(0, index)+"-registered"+imageTitle.substring(index, finalIndex));
+			else
+				HS.setTitle(imageTitle+"-registered");
 			((CompositeImage)HS).setLuts(luts);
 			new StackWindow(HS);
 			if(boolLog)
@@ -2238,4 +2243,4 @@ public class HyperStackReg_v03	implements PlugIn {
 		return(source);
 	} /* end registerSlice */
 
-} /* end class HyperStackReg_v03*/
+} /* end class HyperStackReg_v03a*/
