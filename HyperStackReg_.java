@@ -1,5 +1,5 @@
-// Version 2: November 19, 2015
-// Limitation: target image had to be the first image
+// Version 3: November 20, 2015
+// Limitation: seems to me that target image had to be the first image
 // source image is warped to register to a target image
 
 // ImageJ
@@ -33,7 +33,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.String; // added this to use function lastIndexOf to name the final hyperstack
 
-public class HyperStackReg_v02	implements PlugIn {
+public class HyperStackReg_v03	implements PlugIn {
 	private static final double TINY = 	(double)Float.intBitsToFloat((int)0x33FFFFFF);
 	private String loadPathAndFilename="";
 	private boolean saveTransform;
@@ -67,23 +67,30 @@ public class HyperStackReg_v02	implements PlugIn {
 		}
 
 // Pop-up dialog		
-		GenericDialog gd = new GenericDialog("HyperStackReg_v02");
+		GenericDialog gd = new GenericDialog("HyperStackReg_v03");
 		gd.addMessage("This plugin flattens the original 8/16 bit multichannel\n"
 									  + "  Hyperstack to RGB.\n"
 									  + "Runs StackReg on the time lapse (T) channel for each\n"
 									  + "  Z-slice, and records all the transformation matrices\n"
 									  + "  in a text file.\n"
-									  + "Finally, it applies the transformation matrices to each\n"
+									  + "Finally, it applies those transformation matrices to each\n"
 									  + "  channel of the original 8/16 bit Hyperstack.\n");
 		final String[] transformationItem = {"Translation", "Rigid Body", "Scaled Rotation",	"Affine"};
 		gd.addChoice("Transformation:", transformationItem, "Affine");
+		gd.addCheckbox("Show processing details in the Log file", true);
 		gd.showDialog();
 		if (gd.wasCanceled()) 
 			return;
 		final int transformation = gd.getNextChoiceIndex();
+		 boolean boolLog = gd.getNextBoolean();
 
 // Convert the original 8 or 16 bit Hyperstack to RGB Hyperstack
-        impRGB = imp.duplicate();
+        if(boolLog) {
+        	IJ.log(imageTitle+" (C="+numCh+", Z="+numSl+", T="+numFr+")"); 
+        	IJ.log("*****************************************************");
+        	IJ.log("Duplicating Hyperstack and converting to RGB...");
+        }
+		 impRGB = imp.duplicate();
 		impRGB.setTitle(WindowManager.getUniqueName(imp.getTitle()));
         impRGB.flattenStack();
 		impRGB.show();
@@ -95,19 +102,24 @@ public class HyperStackReg_v02	implements PlugIn {
 		String path=savePath+saveFile;;
 		try{
 			FileWriter fw= new FileWriter(path);
-			fw.write("HyperStackReg_v02 Transformation File\n");
+			fw.write("HyperStackReg_v03 Transformation File\n");
 			fw.write("Author: Ved P. Sharma, Novermber 19, 2015\n");
 			fw.write("Email: vedsharma@gmail.com\n");
 			fw.close();
 		}catch(IOException e){}
-		IJ.log("Transformation matrix file saved at:\n"+path);
+		if(boolLog)
+			IJ.log("Transformation matrix file created at:\n  "+path);
 
 //Start registering RGB slices and write transformation in the text file
 		final int width = impRGB.getWidth();
 		final int height = impRGB.getHeight();
 		final int targetSlice = impRGB.getT();
 		tSlice=targetSlice;
+		if(boolLog)
+			IJ.log("Started registering RGB HyperStack...");
 		for(int k =1; k<=numSl; k++) {
+			if(boolLog)
+				IJ.log("  Processing slice, Z = "+k);
 			impCurr = new Duplicator().run(impRGB, 1,1,k,k,1,numFr);
 			impCurr.show();
 //*******************
@@ -243,11 +255,15 @@ public class HyperStackReg_v02	implements PlugIn {
 		impCurr.close();
 	}
 		impRGB.close();
+		if(boolLog)
+			IJ.log("Done saving  all the transfomation matrices.\nStarted applying them to the original Hyperstack.");
 
 // duplicate channels; read transformations and apply them to each channel
 			impAllSlices=null;
 			for(int j =1; j<=numCh; j++) {
 				for(int k =1; k<=numSl; k++) {	
+					if(boolLog)
+						IJ.log("  Processing channel, C = "+j+", Slice, Z = "+k);
 					impCurr = new Duplicator().run(imp, j,j,k,k,1,numFr);
 					impCurr.show();
 		            loadPathAndFilename = savePath+saveFile;
@@ -411,6 +427,8 @@ public class HyperStackReg_v02	implements PlugIn {
 			HS.setTitle(imageTitle.substring(0, index)+"-registered"+imageTitle.substring(index, finalIndex));
 			((CompositeImage)HS).setLuts(luts);
 			new StackWindow(HS);
+			if(boolLog)
+				IJ.log("Done!\n"+" ");
 	} /* end run */
 			
 /* ********************   private methods *********************/
@@ -2220,4 +2238,4 @@ public class HyperStackReg_v02	implements PlugIn {
 		return(source);
 	} /* end registerSlice */
 
-} /* end class HyperStackReg_v02*/
+} /* end class HyperStackReg_v03*/
