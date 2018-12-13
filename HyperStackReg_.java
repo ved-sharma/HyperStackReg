@@ -1,8 +1,9 @@
-// Version 3a: December 23, 2015: 
-// starting version 3
-// New feature: removed bug produced when the file name does not have "." in its name
-//
-// Author: Ved P. Sharma
+// Version 3b: November 23, 2015
+// This is a temporary version written between versions 3 and 4
+
+// This version does not support channels more than 4
+// Limitation: seems to me that target image had to be the first image
+// source image is warped to register to a target image
 
 // ImageJ
 import ij.CompositeImage;
@@ -11,6 +12,7 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.StackWindow;
+import ij.gui.WaitForUserDialog;
 import ij.io.FileSaver;
 import ij.plugin.PlugIn;
 import ij.plugin.Duplicator;
@@ -35,7 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.String; // added this to use function lastIndexOf to name the final hyperstack
 
-public class HyperStackReg_v03a	implements PlugIn {
+public class HyperStackReg_v03b	implements PlugIn {
 	private static final double TINY = 	(double)Float.intBitsToFloat((int)0x33FFFFFF);
 	private String loadPathAndFilename="";
 	private boolean saveTransform;
@@ -46,30 +48,54 @@ public class HyperStackReg_v03a	implements PlugIn {
 	public void run (	final String arg) {
 		Runtime.getRuntime().gc();
 		final ImagePlus imp = WindowManager.getCurrentImage();
-		ImagePlus impRGB=null, impCurr=null, impAllSlices=null, HS=null;
+		ImagePlus impRGB=null, impCurr=null, impAllSlices=null, HS=null, imp2 =null, imp3=null;
 		
 		if (imp == null) {
-			IJ.error("No image available"); 
+			IJ.error("HyperStackReg", "ERROR\n \nFirst open a stack or a hyperstack and then run this plugin!"); 
 			return; 
 			}
 		if (imp.getStack().isRGB() || imp.getStack().isHSB()) {  // checking for 3-slice, 8-bit RGB or HSB stack
 			IJ.error("Unable to process either RGB or HSB stacks");
 			return;
 		}
+/*
 		if(!imp.isHyperStack()) {
 			IJ.error("A Hyperstack is needed!"); 
 			return; 
+		}
+*/		 
+		if(imp.getNDimensions() < 3) {
+			IJ.error("HyperStackReg", "ERROR\n \nRequires a stack or a hyperstack!");
+			return; 
 		} 
 		else {
-			numCh = imp.getNChannels();		
+			numCh = imp.getNChannels();
+			if(numCh > 6)
+				IJ.error("This plugin does not support Hyperstacks with more than 6 channels!");
 			numSl = imp.getNSlices();		
 			numFr = imp.getNFrames();
+			if(numSl ==1 && numFr==1) {
+				IJ.error("HyperStackReg", "ERROR\n \nRequires a time-lapse and/or a Z-stack or hyperstack!");
+				return; 
+			} 
 			luts = imp.getLuts();
+/*			for(int i = 0; i<numCh; i++) {
+				IJ.log("Ch: "+(i+1)+"  "+luts.toString());
+			}
+*/
 			imageTitle = imp.getTitle();
-		}
+/*			String [] chNames = new String[numCh];
+			for(int i = 0; i<numCh; i++) {
+				imp.setC(i+1);
+				chNames[i] = imp.getStack().getShortSliceLabel(imp.getCurrentSlice());
+				IJ.log(chNames[i]);
+			}
+			imp.setC(1);
+*/
+			}
 
 // Pop-up dialog		
-		GenericDialog gd = new GenericDialog("HyperStackReg_v03a");
+		GenericDialog gd = new GenericDialog("HyperStackReg_v03b");
 		gd.addMessage("This plugin flattens the original 8/16 bit multichannel\n"
 									  + "  Hyperstack to RGB.\n"
 									  + "Runs StackReg on the time lapse (T) channel for each\n"
@@ -79,22 +105,79 @@ public class HyperStackReg_v03a	implements PlugIn {
 									  + "  channel of the original 8/16 bit Hyperstack.\n");
 		final String[] transformationItem = {"Translation", "Rigid Body", "Scaled Rotation",	"Affine"};
 		gd.addChoice("Transformation:", transformationItem, "Affine");
-		gd.addCheckbox("Show processing details in the Log file", true);
+		gd.addMessage("Compute transformation matrix from the following channels:");
+		for(int i = 1; i<=numCh; i++)
+			gd.addCheckbox("Channel "+i, true);
+		gd.addCheckbox("\nShow processing details in the Log file", true);
 		gd.showDialog();
 		if (gd.wasCanceled()) 
 			return;
 		final int transformation = gd.getNextChoiceIndex();
+		boolean [] boolCh = new boolean[numCh];
+		for(int i = 0; i<numCh; i++)
+			 boolCh[i] = gd.getNextBoolean();
 		 boolean boolLog = gd.getNextBoolean();
 
 // Convert the original 8 or 16 bit Hyperstack to RGB Hyperstack
         if(boolLog) {
         	IJ.log(imageTitle+" (C="+numCh+", Z="+numSl+", T="+numFr+")"); 
         	IJ.log("*****************************************************");
-        	IJ.log("Duplicating Hyperstack and converting to RGB...");
+        	IJ.log("Selecting Hyperstack channels and converting to RGB (if no. of Ch >1)...");
         }
-		 impRGB = imp.duplicate();
-		impRGB.setTitle(WindowManager.getUniqueName(imp.getTitle()));
-        impRGB.flattenStack();
+
+        int sumCh=0;
+        for(int i = 0; i<numCh; i++)
+        	sumCh += (boolCh[i]?1:0);
+        IJ.log("Total channels selected: "+sumCh);
+
+        LUT [] chLUT = new LUT [sumCh]; 
+        for(int i = 0, j=0; i<numCh; i++){
+        	if(boolCh[i]){
+        		if(imp2 == null){
+        			imp2 = new Duplicator().run(imp, i+1,i+1,1,numSl,1,numFr);
+        			imp2.show();
+        	        new WaitForUserDialog("before getting the lut 1").show(); 
+        			chLUT[j] = imp2.getLuts()[0];
+        			IJ.log("chLUT: "+chLUT[j]); 
+        			IJ.log("chLUT: "+chLUT[j].toString());
+        			j++;
+        		}
+        		else {
+        			imp3 = new Duplicator().run(imp, i+1,i+1,1,numSl,1,numFr);
+        			imp3.show();
+        	        new WaitForUserDialog("before getting the lut 2").show(); 
+//        			chLUT[j] = ((CompositeImage)imp3).getChannelLut();
+        			chLUT[j] = imp3.getLuts()[0];
+        			IJ.log("chLUT: "+chLUT[j]); 
+        			IJ.log("chLUT: "+chLUT[j].toString());
+        			j++;
+        			imp2 = new Concatenator().concatenate(imp2, imp3, false);
+        		}
+        	}
+        }
+        if(sumCh==0)
+        	IJ.error("No channels were selected for computing transformation matrix!");
+        imp2.show();
+        new WaitForUserDialog("Concate done.").show(); 
+        if(sumCh==1)
+        	impRGB = imp2.duplicate();
+        else{
+	        impRGB = new HyperStackConverter().toHyperStack(imp2, sumCh, numSl, numFr, "xytzc", "Composite");
+			new StackWindow(impRGB);
+	        new WaitForUserDialog("Hyperstack done.").show(); 
+
+	        for(int i = 0; i<sumCh; i++){
+	        	impRGB.setC(i+1);
+		        new WaitForUserDialog("before casting to composite2").show(); 
+	        	((CompositeImage)impRGB).setChannelLut(chLUT[i]);
+	        }
+	        new WaitForUserDialog("before flattening").show(); 
+	        impRGB.flattenStack();
+	        new WaitForUserDialog("flatten done.").show(); 
+	        imp3.close();
+        }
+        imp2.close();
+        impRGB.setTitle(WindowManager.getUniqueName(imp.getTitle()));
 		impRGB.show();
 		
 // Set up path for the transformation matrix text file
@@ -104,9 +187,9 @@ public class HyperStackReg_v03a	implements PlugIn {
 		String path=savePath+saveFile;;
 		try{
 			FileWriter fw= new FileWriter(path);
-			fw.write("HyperStackReg_v03a Transformation File\n");
-			fw.write("Author: Ved P. Sharma, Novermber 19, 2015\n");
-			fw.write("Email: vedsharma@gmail.com\n");
+			fw.write("HyperStackReg_v03b Transformation File\n");
+			fw.write("File created: date and time\n"); // need to work on this
+			fw.write("Author: Ved P. Sharma\n");
 			fw.close();
 		}catch(IOException e){}
 		if(boolLog)
@@ -426,10 +509,7 @@ public class HyperStackReg_v03a	implements PlugIn {
 			impAllSlices.close();
 			int index = imageTitle.lastIndexOf("."); 
 			int finalIndex = imageTitle.length();
-			if(index != -1)
-				HS.setTitle(imageTitle.substring(0, index)+"-registered"+imageTitle.substring(index, finalIndex));
-			else
-				HS.setTitle(imageTitle+"-registered");
+			HS.setTitle(imageTitle.substring(0, index)+"-registered"+imageTitle.substring(index, finalIndex));
 			((CompositeImage)HS).setLuts(luts);
 			new StackWindow(HS);
 			if(boolLog)
@@ -2243,4 +2323,4 @@ public class HyperStackReg_v03a	implements PlugIn {
 		return(source);
 	} /* end registerSlice */
 
-} /* end class HyperStackReg_v03a*/
+} /* end class HyperStackReg_v03b*/
