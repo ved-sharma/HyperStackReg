@@ -1,11 +1,12 @@
 /*
-Version 5a: March 31, 2016
-starting version: 4
+Version 5b: June 2, 2016
+starting version: 5a
 
-New features in version 5a: 
-1. User now have an option to choose specific channels for transformation matrix computation.
+New features in version 5b compared to version 4: 
+1. User now have an option to choose specific channel(s) for transformation matrix computation.
 2. Updated messages to be displayed in the Log file during the plugin execution. 
 3. Improved UI layout with gd.setInsets() method 
+4. is macro recordable, whereas version 5a was not!
 
 Author: Ved P. Sharma
 Albert Einstein College of Medicine, New York
@@ -43,8 +44,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.String; // added this to use function lastIndexOf to name the final hyperstack
 
-public class HyperStackReg_v05a	implements PlugIn {
-	private String version = "05a";
+public class HyperStackReg_v05b	implements PlugIn {
+	private String version = "05b";
 	private static final double TINY = 	(double)Float.intBitsToFloat((int)0x33FFFFFF);
 	private String loadPathAndFilename="";
 	private boolean saveTransform;
@@ -71,6 +72,12 @@ public class HyperStackReg_v05a	implements PlugIn {
 		} 
 		else {
 			numCh = imp.getNChannels();		
+			if(numCh > 5) {
+				String msg = "ERROR:\n \nThis plugin currently does not work with more than 5 channels in the hyperstack."
+						+"\nContact Ved Sharma (ved.sharma@einstein.yu.edu) for further help!";
+				IJ.error("HyperStackReg", msg);
+				return; 
+			} 
 			numSl = imp.getNSlices();		
 			numFr = imp.getNFrames();
 			if(numSl ==1 && numFr==1) { // checking for C>1, Z=1, T=1 case
@@ -84,15 +91,36 @@ public class HyperStackReg_v05a	implements PlugIn {
 // Pop-up dialog		
 		GenericDialog gd = new GenericDialog("HyperStackReg, Version: "+version);
 		gd.setInsets(0, 0, 0);
-		gd.addMessage("Click \"Help\" button below for instructions\non how to use this plugin.");
+		gd.addMessage("Click \"Help\" button below to go to HyperStackReg website,\nfor detailed instructions on how to use this plugin.");
 		final String[] transformationItem = {"Translation", "Rigid Body", "Scaled Rotation",	"Affine"};
 		gd.addChoice("Transformation:", transformationItem, "Affine");
 		gd.setInsets(0, 0, 0);
-		gd.addMessage("Choose channels for transformation\nmatrix computation:");
-		for(int i = 1; i<=numCh; i++) {
+		gd.addMessage("Choose channels for transformation matrix computation:");
+
+		gd.setInsets(0, 20, 0);
+		gd.addCheckbox("Channel1", true);
+		if(numCh > 1) {
+			gd.setInsets(0, 20, 0);
+			gd.addCheckbox("Channel2", true);
+		}
+		if(numCh > 2) {
+			gd.setInsets(0, 20, 0);
+			gd.addCheckbox("Channel3", true);
+		}
+		if(numCh > 3) {
+			gd.setInsets(0, 20, 0);
+			gd.addCheckbox("Channel4", true);
+		}
+		if(numCh > 4) {
+			gd.setInsets(0, 20, 0);
+			gd.addCheckbox("Channel5", true);
+		}
+		
+/*		for(int i = 1; i<=numCh; i++) {
 			gd.setInsets(0, 20, 0);
 			gd.addCheckbox("Channel "+i, true);
 		}
+*/		
 		gd.setInsets(5, 5, 0);
 		gd.addCheckbox("Show processing details in the Log file", true);
 		gd.addHelp("https://sites.google.com/site/vedsharma/imagej-plugins-macros/hyperstackreg");
@@ -2300,4 +2328,4 @@ public class HyperStackReg_v05a	implements PlugIn {
 		return(source);
 	} /* end registerSlice */
 
-} /* end class HyperStackReg_v05a*/
+} /* end class HyperStackReg_v05b*/
