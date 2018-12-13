@@ -1,12 +1,16 @@
 /*
-Version 5b: June 2, 2016
-starting version: 5a
+Version 5: First released as version 05b on June 2, 2016
+Update: version 5c, June 7, 2016
 
-New features in version 5b compared to version 4: 
+New feature in version 5 (a, b and c)
 1. User now have an option to choose specific channel(s) for transformation matrix computation.
 2. Updated messages to be displayed in the Log file during the plugin execution. 
 3. Improved UI layout with gd.setInsets() method 
-4. is macro recordable, whereas version 5a was not!
+4. is macro recordable (whereas version 5a was not!)
+5. If user does not select any channel for transformation matrix computation, then rather than
+	 giving an error message, all the channels are selected and plugin proceeds further 
+6. Above helps in not writing all the channel names as options argument in the run call to the
+	 plugin, which makes the macro call to plugin in version 5, the same as in version 4  
 
 Author: Ved P. Sharma
 Albert Einstein College of Medicine, New York
@@ -44,8 +48,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.String; // added this to use function lastIndexOf to name the final hyperstack
 
-public class HyperStackReg_v05b	implements PlugIn {
-	private String version = "05b";
+public class HyperStackReg_v05	implements PlugIn {
+	private String version = "05";
 	private static final double TINY = 	(double)Float.intBitsToFloat((int)0x33FFFFFF);
 	private String loadPathAndFilename="";
 	private boolean saveTransform;
@@ -115,12 +119,6 @@ public class HyperStackReg_v05b	implements PlugIn {
 			gd.setInsets(0, 20, 0);
 			gd.addCheckbox("Channel5", true);
 		}
-		
-/*		for(int i = 1; i<=numCh; i++) {
-			gd.setInsets(0, 20, 0);
-			gd.addCheckbox("Channel "+i, true);
-		}
-*/		
 		gd.setInsets(5, 5, 0);
 		gd.addCheckbox("Show processing details in the Log file", true);
 		gd.addHelp("https://sites.google.com/site/vedsharma/imagej-plugins-macros/hyperstackreg");
@@ -134,18 +132,16 @@ public class HyperStackReg_v05b	implements PlugIn {
 		 boolean boolLog = gd.getNextBoolean();
 
 // Duplicate or make subHyperstack from the original 8 or 16 bit Hyperstack; convert to RGB if more than 1 channels
-        int sum_boolCh=0;
-		for(int i = 0; i<numCh; i++)
-			 sum_boolCh = sum_boolCh + (boolCh[i] ? 1 : 0);
-        if(sum_boolCh == 0){
-			IJ.error("HyperStackReg", "ERROR:\n \nNo channel selected!\nSelect at least one channel for transformation matrix computation.");
-			return; 
-        }
         if(boolLog) {
         	IJ.log(imageTitle+" (C="+numCh+", Z="+numSl+", T="+numFr+")"); 
         	IJ.log("*****************************************************");
         }
-        if(sum_boolCh == numCh) {
+        int sum_boolCh=0;
+		for(int i = 0; i<numCh; i++)
+			 sum_boolCh = sum_boolCh + (boolCh[i] ? 1 : 0);
+        if(sum_boolCh == 0)
+			IJ.log("WARNING: No channel selected. Computing transformation matrix based on all the channels.");
+        if(sum_boolCh == numCh || sum_boolCh == 0) {
             if(boolLog)
             	IJ.log("Duplicating Hyperstack for transformation matrix computation..."); 
             impRGB = imp.duplicate();
@@ -171,7 +167,8 @@ public class HyperStackReg_v05b	implements PlugIn {
     		impRGB = new SubHyperstackMaker().makeSubhyperstack(imp, cString, zString, tString);
         }
         impRGB.setTitle(WindowManager.getUniqueName(imp.getTitle()));
-    	if(sum_boolCh >1) {
+//    	if(sum_boolCh  != 1) {
+      	if(sum_boolCh  > 1 || (sum_boolCh ==0 && numCh >1)) {
     		IJ.log("Converting duplicated Hyperstack to RGB...");
 			impRGB.flattenStack();
 		}
@@ -2328,4 +2325,4 @@ public class HyperStackReg_v05b	implements PlugIn {
 		return(source);
 	} /* end registerSlice */
 
-} /* end class HyperStackReg_v05b*/
+} /* end class HyperStackReg_v05*/
