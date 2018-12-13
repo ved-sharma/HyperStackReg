@@ -1,12 +1,12 @@
 /*
-Version 5.5: December 13, 2018
-starting version: 5.4
+Version 5.6: December 13, 2018
+starting version: 5.5
 
-Changes in version 5.5
-	Had a bug on line 164 in version 5.4, corrected it back to the corresponding line in version 5.3
+Changes in version 5.6
+	Bug fix - made the HyperStackReg_ class name generic by removing the version number
+	Pressing the Help button will now take the user to GitHub website instead of my old Google site
 
-Author: Ved P. Sharma
- (vedsharma@gmail.com)
+Author: Ved P Sharma (vedsharma@gmail.com)
 Albert Einstein College of Medicine, New York
 */
 
@@ -42,8 +42,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.String; // added this to use function lastIndexOf to name the final hyperstack
 
-public class HyperStackReg_v05d	implements PlugIn {
-	private String version = "05d";
+public class HyperStackReg_	implements PlugIn {
+	private String version = "5.6";
 	private static final double TINY = 	(double)Float.intBitsToFloat((int)0x33FFFFFF);
 	private String loadPathAndFilename="";
 	private boolean saveTransform;
@@ -72,7 +72,7 @@ public class HyperStackReg_v05d	implements PlugIn {
 			numCh = imp.getNChannels();		
 			if(numCh > 5) {
 				String msg = "ERROR:\n \nThis plugin currently does not work with more than 5 channels in the hyperstack."
-						+"\nContact Ved Sharma (ved.sharma@einstein.yu.edu) for further help!";
+						+"\nContact Ved Sharma (vedsharma@gmail.com) for further help!";
 				IJ.error("HyperStackReg", msg);
 				return; 
 			} 
@@ -87,7 +87,7 @@ public class HyperStackReg_v05d	implements PlugIn {
 		}
 
 // Pop-up dialog		
-		GenericDialog gd = new GenericDialog("HyperStackReg, Version: "+version);
+		GenericDialog gd = new GenericDialog("HyperStackReg, Version "+version);
 		gd.setInsets(0, 0, 0);
 		gd.addMessage("Click \"Help\" button below to go to HyperStackReg website,\nfor detailed instructions on how to use this plugin.");
 		final String[] transformationItem = {"Translation", "Rigid Body", "Scaled Rotation",	"Affine"};
@@ -115,7 +115,7 @@ public class HyperStackReg_v05d	implements PlugIn {
 		}
 		gd.setInsets(5, 5, 0);
 		gd.addCheckbox("Show processing details in the Log file", true);
-		gd.addHelp("https://sites.google.com/site/vedsharma/imagej-plugins-macros/hyperstackreg");
+		gd.addHelp("https://github.com/ved-sharma/HyperStackReg");
 		gd.showDialog();
 		if (gd.wasCanceled()) 
 			return;
@@ -176,7 +176,7 @@ public class HyperStackReg_v05d	implements PlugIn {
 		try{
 			FileWriter fw= new FileWriter(path);
 			fw.write("HyperStackReg_v"+version+" Transformation File\n");
-			fw.write("Author: Ved P. Sharma\n");
+			fw.write("Author: Ved P Sharma\n");
 			fw.write("Albert Einstein College of Medicine, New York\n");
 			fw.close();
 		}catch(IOException e){}
@@ -2319,4 +2319,4 @@ public class HyperStackReg_v05d	implements PlugIn {
 		return(source);
 	} /* end registerSlice */
 
-} /* end class HyperStackReg_v05d*/
+} /* end class HyperStackReg_*/
