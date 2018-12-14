@@ -1,11 +1,11 @@
 # HyperStackReg ImageJ plugin
 
-![alt text](https://github.com/ved-sharma/HyperStackReg/blob/master/Data/Example%20hyperstack%20-%20before%20vs%20after.gif "Example image")
+<img src="https://github.com/ved-sharma/HyperStackReg/blob/master/Data/Example_hyperstack-before_and_after.gif" alt="Example movie">
 
-**Movie:** A 16-bit multi-channel (blue, green and red) hyperstack before and after HyperStackReg registration. The intravital multiphoton movie shows green and red labeled cells moving in vivo in living mice. Extracellular matrix collagen fibers are shown in blue.
+**Movie:** A 16-bit multi-channel (blue, green and red) hyperstack movie before and after HyperStackReg registration. The intravital multiphoton movie shows green and red labeled cells moving in vivo in living mice. Extracellular matrix collagen fibers are shown in blue.
 
 # Rationale
-A single channel time-lapse, Z-stack (C=1, Z>=1, T>1) can be aligned using [StackReg](http://bigwww.epfl.ch/thevenaz/stackreg/) plugin. HyperStackReg plugin, on the other hand, aligns images in a multi-channel hyperstack (C>1, Z>=1, T>1). The main idea of the HyperStackReg plugin is to apply the same transformation matrix to each channel of a hyperstack, so that all the channels of a hyperstack are registered with respect to each other.
+A single channel time-lapse, Z-stack (C=1, Z>=1, T>1) can be aligned using [StackReg](http://bigwww.epfl.ch/thevenaz/stackreg/) plugin. HyperStackReg plugin builds on the functionalities of StackReg to align images in a multi-channel hyperstack (C>1, Z>=1, T>1). The main idea of the HyperStackReg plugin is to apply the same transformation matrix to each channel of a hyperstack, so that all the channels of a hyperstack are registered with respect to each other.
 
 # Installation
 Put <a href="https://github.com/ved-sharma/HyperStackReg/blob/master/HyperStackReg_.class" download>HyperStackReg_.class<a/> in the plugins folder and restart ImageJ. "HyperStackReg_" command should be visible under Plugins menu.
