@@ -40,4 +40,4 @@ HyperStackReg plugin was created by [Ved Sharma](mailto:vedsharma@gmail.com) dur
 See [license](https://github.com/ved-sharma/HyperStackReg/blob/master/LICENSE) file
 
 # Questions
-[Image.sc](https://forum.image.sc/) is the best place to ask questions about his plugin. Please post your question with @vedsharma tag so I recieve your message.
+[Image.sc](https://forum.image.sc/) is the best place to ask questions about this plugin. Please post your question with @vedsharma tag so I recieve your message.
