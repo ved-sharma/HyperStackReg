@@ -31,7 +31,7 @@ Plugin is macro recordable, so a folder full of files can be processed in batch 
 This plugin builts on the functionalities of other plugins: [StackReg](http://bigwww.epfl.ch/thevenaz/stackreg/) and [MultiStackReg](http://bradbusse.net/downloads.html)
 
 # Author
-HyperStackReg plugin was created by [Ved Sharma](mailto:vedsharma@gmail.com) during 2015-16, while in the [John Condeelis laboratory](https://www.einstein.yu.edu/labs/john-condeelis/) at Albert Einstein College of Medicine.
+HyperStackReg plugin was written by [Ved Sharma](mailto:vedsharma@gmail.com) during 2015-16, while in [John Condeelis's laboratory](https://einsteinmed.edu/labs/john-condeelis/) at the Albert Einstein College of Medicine.
 
 # How to cite
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2252521.svg)](https://doi.org/10.5281/zenodo.2252521)
@@ -40,4 +40,4 @@ HyperStackReg plugin was created by [Ved Sharma](mailto:vedsharma@gmail.com) dur
 See [license](https://github.com/ved-sharma/HyperStackReg/blob/master/LICENSE) file
 
 # Questions
-[Image.sc](https://forum.image.sc/) is the best place to ask questions about this plugin. Please post your question with @vedsharma tag so I recieve your message.
+[Image.sc](https://forum.image.sc/) is the best place to ask questions about this plugin. Please post your question with the @vedsharma tag so I get the notification.
