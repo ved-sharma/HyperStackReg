@@ -99,7 +99,7 @@ public class HyperStackReg_	implements PlugIn {
 
 		for(int i=0; i<numCh; i++) { // add checkbox entry for each channel
 			gd.setInsets(0, 20, 0);
-			gd.addCheckbox("Channel "+(i+1), true);
+			gd.addCheckbox("Channel_"+(i+1), true);
 		}
 /*	replaced this part of the code by the for loop above to make it work for any number of channels in version 5.7		
 		gd.setInsets(0, 20, 0);
