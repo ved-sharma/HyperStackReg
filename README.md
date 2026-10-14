@@ -37,6 +37,11 @@ This plugin builts on the functionalities of other plugins: [StackReg](http://bi
 HyperStackReg plugin was written by [Ved Sharma](mailto:vedsharma@gmail.com) during 2015-16, while in [John Condeelis's laboratory](https://einsteinmed.edu/labs/john-condeelis/) at the Albert Einstein College of Medicine.
 
 # How to cite
+Please cite the original StackReg paper on which this plugin is based on:
+```
+Thévenaz P, Ruttimann UE, Unser M. A pyramid approach to subpixel registration based on intensity. IEEE Trans Image Process. 1998;7(1):27-41.
+```
+If you would also like to cite the HyperStackReg plugin:
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2252521.svg)](https://doi.org/10.5281/zenodo.2252521)
 
 # License
